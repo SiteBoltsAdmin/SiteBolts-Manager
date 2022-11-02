@@ -9,7 +9,7 @@
 
 function sbman_get_plugin_version()
 {
-	return '2';
+	return '12';
 }
 
 function sbman_add_wp_admin_menu()
@@ -22,6 +22,16 @@ function sbman_add_wp_admin_menu()
 						'sitebolts_manager_overview',
 						'sbman_generate_overview_page',
 						0,
+					);
+					
+	add_submenu_page(
+						'edit.php?post_type=client_site',
+						'Settings',
+						'Settings',
+						'administrator',
+						'sitebolts_manager_settings',
+						'sbman_generate_settings_page',
+						3,
 					);
 }
 
@@ -186,6 +196,10 @@ function sbman_generate_overview_page()
 	echo '</div>';
 }
 
+function sbman_generate_settings_page()
+{
+	echo 'TODO';
+}
 
 function sbman_register_client_site_post_type()
 {
@@ -245,6 +259,7 @@ function sbman_generate_client_sites_metabox()
 	$site_token = $post_meta['site_token'][0] ?? null;
 	$endpoint_type = $post_meta['endpoint_type'][0] ?? null;
 	$site_notes = $post_meta['site_notes'][0] ?? null;
+	$uptime_kuma_id = $post_meta['uptime_kuma_id'][0] ?? null;
 	
 	echo '<p><span style="display: inline-block; min-width: 90px;">Site URL:</span> <input type="text" name="site_url" id="site-url-field" class="site-url-field" value="' . htmlspecialchars($site_url ?? '') . '" size="50"></p>';
 	
@@ -258,8 +273,10 @@ function sbman_generate_client_sites_metabox()
 					<option value="none"' . (($endpoint_type === 'none') ? ' selected' : '') . '>None</option>
 				</select>
 			</p>';
-			
+	
 	echo '<p><span style="display: inline-block; min-width: 90px;">Notes:</span> <textarea name="site_notes" id="site-notes-field" class="site-notes-field" cols="53" rows="10">' . htmlspecialchars($site_notes) . '</textarea></p>';
+	
+	echo '<p><span style="display: inline-block; min-width: 90px;">Uptime Kuma ID:</span> <input type="text" name="uptime_kuma_id" id="uptime-kuma-field" class="uptime-kuma-field" value="' . htmlspecialchars($uptime_kuma_id ?? '') . '" size="50"></p>';
 	
 	echo '<p><span style="display: inline-block; min-width: 90px;">(TODO) Maintainer:</span> <input type="text" name="TEMP1" id="site-token-field" class="site-token-field" value="' . htmlspecialchars($site_token ?? '') . '" size="50"></p>';
 	
@@ -276,6 +293,7 @@ function wporg_save_postdata($post_id)
 	$site_token = $_POST['site_token'] ?? null;
 	$endpoint_type = $_POST['endpoint_type'] ?? null;
 	$site_notes = $_POST['site_notes'] ?? null;
+	$uptime_kuma_id = $_POST['uptime_kuma_id'] ?? null;
 	
 	if ($site_url !== null)
 	{
@@ -295,6 +313,11 @@ function wporg_save_postdata($post_id)
 	if ($site_notes !== null)
 	{
 		update_post_meta($post_id, 'site_notes', $site_notes);
+	}
+	
+	if ($uptime_kuma_id !== null)
+	{
+		update_post_meta($post_id, 'uptime_kuma_id', $uptime_kuma_id);
 	}
 	
 }
