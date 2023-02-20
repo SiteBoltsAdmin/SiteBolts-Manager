@@ -2,7 +2,7 @@
 /*
 * Plugin Name: SiteBolts Manager
 * Description: A central management plugin that helps you keep track of the sites you maintain.
-* Version: 12
+* Version: 3.0
 * Author: SiteBolts
 * Author URI: https://sitebolts.com/
 */
@@ -14,7 +14,7 @@
 
 function sbman_get_plugin_version()
 {
-	return '13';
+	return '3';
 }
 
 function sbman_add_wp_admin_menu()
