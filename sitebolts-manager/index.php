@@ -2,14 +2,19 @@
 /*
 * Plugin Name: SiteBolts Manager
 * Description: A central management plugin that helps you keep track of the sites you maintain.
-* Version: 2.0
+* Version: 12
 * Author: SiteBolts
 * Author URI: https://sitebolts.com/
 */
 
+//TODO:
+//Add a client name / email / phone field
+//Make the JS not lookup potential and retired sites
+//Figure out why some of the REST requests are failing on valid sites
+
 function sbman_get_plugin_version()
 {
-	return '12';
+	return '13';
 }
 
 function sbman_add_wp_admin_menu()
@@ -194,11 +199,60 @@ function sbman_generate_overview_page()
 	echo '<li><b>Test 20</b>: Is Contact Form 7 missing reCAPTCHA?</li>';
 	echo '</ul>';
 	echo '</div>';
+	//TODO: Check for a blank site title (/wp-admin/options-general.php) or admin email address
 }
 
 function sbman_generate_settings_page()
 {
-	echo 'TODO';
+	echo '<div class="wrap">';
+	echo '<h1 class="wp-heading-inline">SiteBolts Manager - Settings</h1>';
+	echo '<hr class="wp-header-end">';
+	echo '</div>'; //.wrap
+	
+	echo'
+	<form method="post" action="https://sitebolts.com/main/wp-admin/options.php?tab=general">
+					<input type="hidden" name="option_page" value="check-email-settings"><input type="hidden" name="action" value="update"><input type="hidden" id="_wpnonce" name="_wpnonce" value="9109c2dcdc"><input type="hidden" name="_wp_http_referer" value="/main/wp-admin/admin.php?page=check-email-settings"><table class="form-table" role="presentation"><tbody><tr class="check_email_allowed_user_roles"><th scope="row">Allowed User Roles</th><td>
+		<p>
+			<input type="checkbox" checked="" disabled="">Administrator		</p>
+
+					<p>
+				<input type="checkbox" name="check-email-log-core[allowed_user_roles][]" value="editor">
+
+				Editor			</p>
+					<p>
+				<input type="checkbox" name="check-email-log-core[allowed_user_roles][]" value="author">
+
+				Author			</p>
+					<p>
+				<input type="checkbox" name="check-email-log-core[allowed_user_roles][]" value="contributor">
+
+				Contributor			</p>
+					<p>
+				<input type="checkbox" name="check-email-log-core[allowed_user_roles][]" value="subscriber">
+
+				Subscriber			</p>
+		
+		<p>
+			<em>
+				<strong>Note:</strong> Users with the above User Roles can view Status and Logs Page.				Administrator always has access and cannot be disabled.			</em>
+		</p>
+
+		</td></tr><tr class="check_email_remove_on_uninstall"><th scope="row">Remove Data on Uninstall?</th><td>
+		<input type="checkbox" name="check-email-log-core[remove_on_uninstall]" value="true">
+		Check this box if you would like to completely remove all of its data when the plugin is deleted.
+		</td></tr><tr class="check_email_override_emails_from"><th scope="row">Override Emails From</th><td>            <input id="check-email-overdide-from" type="checkbox" name="check-email-log-core[override_emails_from]" value="true">
+            Check this box if you would like override wordpress default from email and name.		</td></tr><tr class="check_email_email_from_name" style="display: none;"><th scope="row">Change the "from" name.</th><td><input id="check-email-from_name" type="text" name="check-email-log-core[email_from_name]" value="" size="35"></td></tr><tr class="check_email_email_from_email" style="display: none;"><th scope="row">Change the "from" email.</th><td><input id="check-email-from_email" type="email" name="check-email-log-core[email_from_email]" value="" size="35"></td></tr><tr class="check_email_enable_logs"><th scope="row">Enable Logs</th><td>            <input id="check-email-enable-logs" type="checkbox" name="check-email-log-core[enable_logs]" value="true">
+            Check this box if you would like to log your emails.            </td></tr><tr class="check_email_enable_dashboard_widget" style="display: none;"><th scope="row">Enable Dashboard Widget</th><td>
+		<input id="check-email-enable-widget" type="checkbox" name="check-email-log-core[enable_dashboard_widget]" value="true">
+		Check this box if you would like to enable dashboard widget.
+		</td></tr><tr class="check_email_db_size_notification" style="display: none;"><th scope="row">Database Size Notification</th><td>
+        <input id="check-email-enable-db-notifications" type="checkbox" name="check-email-log-core[db_size_notification][notify]" value="true">
+		Notify <input type="email" name="check-email-log-core[db_size_notification][admin_email]" value="admin@sitebolts.com" size="35"> if there are more than <input type="number" name="check-email-log-core[db_size_notification][logs_threshold]" placeholder="5000" value="" min="0" max="99999999"> logs.		<p>
+			<em>
+				<strong>Note:</strong> There are <strong>0</strong> email logs currently logged in the database.			</em>
+		</p>
+		</td></tr></tbody></table><p class="submit"><input type="submit" name="submit" id="submit" class="button button-primary" value="Save"></p>				</form>
+		';
 }
 
 function sbman_register_client_site_post_type()
@@ -206,7 +260,8 @@ function sbman_register_client_site_post_type()
 	$labels =	[
 					'name'					=> _x('Client Sites', 'Post Type General Name'),
 					'singular_name'			=> _x('Client Site', 'Post Type Singular Name'),
-					'menu_name'				=> __('SiteBolts Manager'),
+					//'menu_name'				=> __('Site Manager'),
+					'menu_name'				=> __('SB Site Manager'),
 					'parent_item_colon'		=> __('Parent Client Sites'),
 					'all_items'				=> __('Client Sites'),
 					'view_item'				=> __('View Client Sites'),
@@ -258,12 +313,28 @@ function sbman_generate_client_sites_metabox()
 	$site_url = $post_meta['site_url'][0] ?? null;
 	$site_token = $post_meta['site_token'][0] ?? null;
 	$endpoint_type = $post_meta['endpoint_type'][0] ?? null;
+	$site_status = $post_meta['site_status'][0] ?? null;
 	$site_notes = $post_meta['site_notes'][0] ?? null;
 	$uptime_kuma_id = $post_meta['uptime_kuma_id'][0] ?? null;
+	$uptime_robot_id = $post_meta['uptime_robot_id'][0] ?? null;
+	$maintainer = $post_meta['maintainer'][0] ?? null;
+	$maintenance_pay = $post_meta['maintenance_pay'][0] ?? null;
+	
+	?>
+	<style>
+	.client-sites-metabox-fields .sensitive-field
+	{
+		-webkit-text-security: disc;
+		text-security: disc;
+	}
+	</style>
+	<?php
+	
+	echo '<div class="client-sites-metabox-fields">';
 	
 	echo '<p><span style="display: inline-block; min-width: 90px;">Site URL:</span> <input type="text" name="site_url" id="site-url-field" class="site-url-field" value="' . htmlspecialchars($site_url ?? '') . '" size="50"></p>';
 	
-	echo '<p><span style="display: inline-block; min-width: 90px;">Site token:</span> <input type="text" name="site_token" id="site-token-field" class="site-token-field" value="' . htmlspecialchars($site_token ?? '') . '" size="50"></p>';
+	echo '<p><span style="display: inline-block; min-width: 90px;">Site token:</span> <input type="text" name="site_token" id="site-token-field" class="site-token-field sensitive-field" value="' . htmlspecialchars($site_token ?? '') . '" size="50"></p>';
 	
 	echo	'<p>
 				<span style="display: inline-block; min-width: 90px;">Endpoint type:</span>
@@ -273,16 +344,31 @@ function sbman_generate_client_sites_metabox()
 					<option value="none"' . (($endpoint_type === 'none') ? ' selected' : '') . '>None</option>
 				</select>
 			</p>';
+			
+	echo	'<p>
+				<span style="display: inline-block; min-width: 90px;">Site status:</span>
+				<select name="site_status" id="site-status-field" class="endpoint-type-field" style="min-width: 369px;">
+					<option value=""' . (($site_status === '') ? ' selected' : '') . '>(Select)</option>
+					<option value="potential_project"' . (($site_status === 'in_development') ? ' selected' : '') . '>Potential project</option>
+					<option value="in_development"' . (($site_status === 'in_development') ? ' selected' : '') . '>In development</option>
+					<option value="active"' . (($site_status === 'active') ? ' selected' : '') . '>Active</option>
+					<option value="retired"' . (($site_status === 'retired') ? ' selected' : '') . '>Retired</option>
+				</select>
+			</p>';
 	
 	echo '<p><span style="display: inline-block; min-width: 90px;">Notes:</span> <textarea name="site_notes" id="site-notes-field" class="site-notes-field" cols="53" rows="10">' . htmlspecialchars($site_notes) . '</textarea></p>';
 	
 	echo '<p><span style="display: inline-block; min-width: 90px;">Uptime Kuma ID:</span> <input type="text" name="uptime_kuma_id" id="uptime-kuma-field" class="uptime-kuma-field" value="' . htmlspecialchars($uptime_kuma_id ?? '') . '" size="50"></p>';
 	
-	echo '<p><span style="display: inline-block; min-width: 90px;">(TODO) Maintainer:</span> <input type="text" name="TEMP1" id="site-token-field" class="site-token-field" value="' . htmlspecialchars($site_token ?? '') . '" size="50"></p>';
+	echo '<p><span style="display: inline-block; min-width: 90px;">Uptime Robot ID:</span> <input type="text" name="uptime_robot_id" id="uptime-robot-field" class="uptime-robot-field" value="' . htmlspecialchars($uptime_robot_id ?? '') . '" size="50"></p>';
 	
-	echo '<p><span style="display: inline-block; min-width: 90px;">(TODO) Maintenance pay:</span> <input type="text" name="TEMP2" id="site-token-field" class="site-token-field" value="' . htmlspecialchars($site_token ?? '') . '" size="50"></p>';
+	echo '<p><span style="display: inline-block; min-width: 90px;">Maintainer:</span> <input type="text" name="maintainer" id="site-token-field" class="site-token-field" value="' . htmlspecialchars($maintainer ?? '') . '" size="50"></p>';
 	
-	echo '<p>TODO: Add a select element for whether a site is SiteBolts managed (Yes, Partially (please specify), No)</p>';
+	echo '<p><span style="display: inline-block; min-width: 90px;">Maintenance pay:</span> <input type="text" name="maintenance_pay" id="site-token-field" class="site-token-field" value="' . htmlspecialchars($maintenance_pay ?? '') . '" size="50"></p>';
+	
+	//TODO: Add a select element for whether a site is SiteBolts managed (Yes, Partially (please specify), No)';
+	
+	echo '</div>'; //.client-sites-metabox-fields
 }
 
 
@@ -292,8 +378,12 @@ function wporg_save_postdata($post_id)
 	$site_url = $_POST['site_url'] ?? null;
 	$site_token = $_POST['site_token'] ?? null;
 	$endpoint_type = $_POST['endpoint_type'] ?? null;
+	$site_status = $_POST['site_status'] ?? null;
 	$site_notes = $_POST['site_notes'] ?? null;
 	$uptime_kuma_id = $_POST['uptime_kuma_id'] ?? null;
+	$uptime_robot_id = $_POST['uptime_robot_id'] ?? null;
+	$maintainer = $_POST['maintainer'] ?? null;
+	$maintenance_pay = $_POST['maintenance_pay'] ?? null;
 	
 	if ($site_url !== null)
 	{
@@ -310,6 +400,11 @@ function wporg_save_postdata($post_id)
 		update_post_meta($post_id, 'endpoint_type', $endpoint_type);
 	}
 	
+	if ($site_status !== null)
+	{
+		update_post_meta($post_id, 'site_status', $site_status);
+	}
+	
 	if ($site_notes !== null)
 	{
 		update_post_meta($post_id, 'site_notes', $site_notes);
@@ -320,7 +415,22 @@ function wporg_save_postdata($post_id)
 		update_post_meta($post_id, 'uptime_kuma_id', $uptime_kuma_id);
 	}
 	
+	if ($uptime_robot_id !== null)
+	{
+		update_post_meta($post_id, 'uptime_robot_id', $uptime_robot_id);
+	}
+	
+	if ($maintainer !== null)
+	{
+		update_post_meta($post_id, 'maintainer', $maintainer);
+	}
+	
+	if ($maintenance_pay !== null)
+	{
+		update_post_meta($post_id, 'maintenance_pay', $maintenance_pay);
+	}
 }
+
 add_action('save_post_client_site', 'wporg_save_postdata');
 
 

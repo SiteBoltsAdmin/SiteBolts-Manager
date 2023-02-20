@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function()
 		form_data.append('action', 'sbmon_get_site_metrics_ajax');
 		form_data.append('token', site_token);
 
-		fetch(site_url + 'wp-json/sitebolts-monitor/v1/sbmon_get_site_metrics_rest', {method: 'POST', headers: {}, body: form_data})
+		fetch(site_url + '?rest_route=/sitebolts-monitor/v1/sbmon_get_site_metrics_rest', {method: 'POST', headers: {}, body: form_data})
 		.then
 		(
 			response => response.json(),
@@ -94,8 +94,9 @@ document.addEventListener('DOMContentLoaded', function()
 		let tests =	[
 						{'key': 'plugin_version', 'acceptable_values': ['4']},
 						{'key': 'php_version', 'acceptable_values': [
-																		'8.1.9', //Latest GoDaddy version
-																		'8.1.11' //Latest NameCheap version
+																		'8.1.14', //Latest GoDaddy version
+																		'8.1.13', //Latest Lightsail version
+																		'8.1.15', //Latest NameCheap version
 																	]},
 						{'key': 'num_plugin_updates', 'acceptable_values': [0]},
 						{'key': 'num_theme_updates', 'acceptable_values': [0]},
